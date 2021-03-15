@@ -60,6 +60,7 @@ struct Circle {
     colour: [f32; 4],
     radius: f64,
     lifetime: f64,
+    coeff_rest: f64,
     age: f64,
 }
 //enum QuadTree {
@@ -74,6 +75,7 @@ struct CircleParams {
     a: Option<[f64; 2]>,
     c: Option<[f32; 4]>,
     l: Option<f64>,
+    cr:Option<f64>,
 }
 
 struct Inflow {
@@ -182,6 +184,7 @@ impl Circle {
         acceleration: [f64; 2],
         radius: f64,
         colour: [f32; 4],
+        coeff_rest:f64,
         lifetime: f64,
     ) -> Circle {
         Circle {
@@ -190,6 +193,7 @@ impl Circle {
             acceleration,
             radius,
             colour,
+            coeff_rest,
             lifetime,
             age: 0.0,
         }
@@ -202,12 +206,13 @@ impl Circle {
         let acceleration = params.a.unwrap_or_else(|| GRAVITY);
         let colour = params.c.unwrap_or_else(random_colour);
         let lifetime = params.l.unwrap_or_else(|| PARTICLE_LIFETIME);
-        Circle::new(position, velocity, acceleration, radius, colour, lifetime)
+        let coeff_rest = params.cr.unwrap_or_else(|| random::<f64>()*0.5 + 0.2);
+        Circle::new(position, velocity, acceleration, radius, colour,coeff_rest,lifetime)
     }
 
     fn update_position(&mut self, dt: f64, container_state: &ContainerState, wall_thickness: &f64) {
         //let coeff_rest: f64 = 0.2 + random::<f64>() * 0.5;
-        let coeff_rest: f64 = 0.4;
+        let coeff_rest: f64 = self.coeff_rest;
         self.age += dt;
         let [x, y] = self.position;
         let [vx, vy] = self.velocity;
@@ -255,6 +260,7 @@ fn march_line(
         p: Some(init_pos),
         v: Some(init_vect),
         r: Some(2.0),
+        cr: Some(0.45),
         ..CircleParams::default()
     });
     let mut line_segments: Vec<Line> = Vec::new();
@@ -635,6 +641,7 @@ fn main() {
                                 [0.0, 0.0],
                                 10.0,
                                 random_colour(),
+                                0.45,
                                 100_000.0,
                             ));
                         }

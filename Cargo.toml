@@ -1,0 +1,13 @@
+[package]
+name = "physbox-rs"
+version = "0.1.0"
+authors = ["ezxje"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+piston_window="0.93.0"
+itertools = "0.3.6"
+rand="0.6.5"
+find_folder="*"

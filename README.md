@@ -5,16 +5,7 @@ A toy project created while learning the language, graphics drawn using the `pis
 
 ![Orbits](https://github.com/For-The-Wolf/physbox-rs/blob/master/images/orbits.png)
 
-**Figure 1**: Particle emittors and a particle orbiting a blackhole.
-
-![Fountains](https://github.com/For-The-Wolf/physbox-rs/blob/master/images/fountains.png)
-
-**Figure 2**: Emiitors with global gravity and containing walls enabled.
-
-![Tidal Stripping](https://github.com/For-The-Wolf/physbox-rs/blob/master/images/tidal-stripping.png)
-
-**Figure 3** A two black hole system, one stripping particles from the others orbit.
-
+**Figure 1**: Particle emitters and a particle orbiting a blackhole.
 
 ## Building
 Simply `cd` into `physbox-rs` after cloning into the repo.
@@ -33,6 +24,17 @@ Then, build and run with `cargo run --release` (make sure to use the release fla
 ..* `o` Obstacle insert mode, inserts static collision detecting objects (not yet implelemted).
 
 ## Some examples
+
+![Fountains](https://github.com/For-The-Wolf/physbox-rs/blob/master/images/fountains.png)
+
+**Figure 2**: Emitters with global gravity and containing walls enabled.
+
+![Tidal Stripping](https://github.com/For-The-Wolf/physbox-rs/blob/master/images/tidal-stripping.png)
+
+**Figure 3** A two black hole system, one stripping particles from the other's orbit.
+
+
+
 ![Video 1](https://user-images.githubusercontent.com/74791897/111236386-a448ad80-85ea-11eb-8eb9-722e7bf8a8a5.mp4)
 
 **Video 1**: Drawing two particle emitters and inserting a blackhole between them.

@@ -1,6 +1,7 @@
 
 # physbox-rs
 A physics sandbox written in Rust.
+
 A toy project created while learning the language, graphics drawn using the `piston_window` crate.
 
 ![Orbits](https://github.com/For-The-Wolf/physbox-rs/blob/master/images/orbits.png)

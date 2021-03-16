@@ -13,15 +13,20 @@ Simply `cd` into `physbox-rs` after cloning into the repo.
 Then, build and run with `cargo run --release` (make sure to use the release flag to build with optimisation).
 
 ## Controls
-* `Space` iterates through: Global gravity {Off, Down, Up}.
-* `Enter` toggles solid walls around the window (on by default).
-* `r` remvoes all entities from the simulation.
-* `right-click` remove entities under the mouse pointer.
 * `left-click` and drag, insert an entity depending on the current insert mode:
-..* `p` Particle insert mode, creates a particle with the drawn initial velocity vector.
-..* `e` Emmiter insert mode, creates a particle emitter emitting particles with velocities distributed about the drawn vector.
-..* `b` BlackHole insert mode, creates a black hole with mass proportional to the drawn radius.
-..* `o` Obstacle insert mode, inserts static collision detecting objects (not yet implelemted).
+* `p` Particle insert mode, creates a particle with the drawn initial velocity vector.
+* `e` Emmiter insert mode, creates a particle emitter emitting particles with velocities distributed about the drawn vector.
+* `b` BlackHole insert mode, creates a black hole with mass proportional to the drawn radius.
+* `o` Obstacle insert mode, inserts static collision detecting objects (not yet implelemted).
+
+* `right-click` remove entities under the mouse pointer.
+* * `r` remvoes *all* entities from the simulation.
+
+* `Space` iterates through: Global gravity {Off, Down, Up}.
+* `Return` toggles solid walls around the window (on by default).
+
+
+
 
 ## Some examples
 

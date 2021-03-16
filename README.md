@@ -21,7 +21,7 @@ Then, build and run with `cargo run --release` (make sure to use the release fla
 * `o` Obstacle insert mode, inserts static collision detecting objects (not yet implelemted).
 
 * `right-click` remove entities under the mouse pointer.
-* * `r` remvoes *all* entities from the simulation.
+* `r` remvoes *all* entities from the simulation.
 
 * `Space` iterates through: Global gravity {Off, Down, Up}.
 * `Return` toggles solid walls around the window (on by default).

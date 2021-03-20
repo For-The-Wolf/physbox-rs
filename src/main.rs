@@ -1,4 +1,6 @@
-use piston_window::{MouseCursorEvent, PressEvent, ReleaseEvent, RenderEvent, UpdateEvent};
+use piston_window::{
+    Context, DrawState, MouseCursorEvent, PressEvent, ReleaseEvent, RenderEvent, UpdateEvent,
+};
 //use std::path::Path;
 use rand::random;
 use std::collections::VecDeque;
@@ -63,10 +65,7 @@ struct Circle {
     coeff_rest: f64,
     age: f64,
 }
-//enum QuadTree {
-//    Leaf {particle_indices: Vec<usize>},
-//    Branch {leaves: [Box<QuadTree>; 4]},
-//}
+
 #[derive(Default)]
 struct CircleParams {
     r: Option<f64>,
@@ -75,7 +74,7 @@ struct CircleParams {
     a: Option<[f64; 2]>,
     c: Option<[f32; 4]>,
     l: Option<f64>,
-    cr:Option<f64>,
+    cr: Option<f64>,
 }
 
 struct Inflow {
@@ -184,7 +183,7 @@ impl Circle {
         acceleration: [f64; 2],
         radius: f64,
         colour: [f32; 4],
-        coeff_rest:f64,
+        coeff_rest: f64,
         lifetime: f64,
     ) -> Circle {
         Circle {
@@ -206,8 +205,16 @@ impl Circle {
         let acceleration = params.a.unwrap_or_else(|| GRAVITY);
         let colour = params.c.unwrap_or_else(random_colour);
         let lifetime = params.l.unwrap_or_else(|| PARTICLE_LIFETIME);
-        let coeff_rest = params.cr.unwrap_or_else(|| random::<f64>()*0.5 + 0.2);
-        Circle::new(position, velocity, acceleration, radius, colour,coeff_rest,lifetime)
+        let coeff_rest = params.cr.unwrap_or_else(|| random::<f64>() * 0.5 + 0.2);
+        Circle::new(
+            position,
+            velocity,
+            acceleration,
+            radius,
+            colour,
+            coeff_rest,
+            lifetime,
+        )
     }
 
     fn update_position(&mut self, dt: f64, container_state: &ContainerState, wall_thickness: &f64) {
@@ -282,8 +289,152 @@ fn march_line(
     line_segments
 }
 fn _show_insert_mode(_insert_mode: InsertState) {}
+fn draw_particles<G: piston_window::Graphics>(
+    circs: &VecDeque<Circle>,
+    d_state: &DrawState,
+    c: Context,
+    g: &mut G,
+    container_state: &ContainerState,
+) {
+    for circ in circs {
+        let [x, y] = circ.position;
+        if container_state == &ContainerState::Closed
+            || (x > -circ.radius)
+                && (x < WIDTH + circ.radius)
+                && (y > -circ.radius)
+                && (y < HEIGHT + circ.radius)
+        {
+            let [c_r, c_g, c_b, _] = circ.colour;
+            let ellipse = piston_window::Ellipse::new([
+                c_r,
+                c_g,
+                c_b,
+                1.0 - (circ.age / circ.lifetime) as f32,
+            ])
+            .resolution(7);
+            ellipse.draw(
+                [
+                    x - circ.radius,
+                    y - circ.radius,
+                    circ.radius * 2.0,
+                    circ.radius * 2.0,
+                ],
+                d_state,
+                c.transform,
+                g,
+            );
+        }
+    }
+}
+fn draw_background<G: piston_window::Graphics>(
+    container_state: &ContainerState,
+    bg_colour: [f32; 4],
+    wall_colour: [f32; 4],
+    wall_thickness: f64,
+    c: Context,
+    g: &mut G,
+) {
+    if container_state == &ContainerState::Open {
+        piston_window::clear(bg_colour, g);
+    } else {
+        piston_window::clear(wall_colour, g);
+        piston_window::polygon(
+            bg_colour,
+            &[
+                [WIDTH - wall_thickness, HEIGHT - wall_thickness],
+                [wall_thickness, HEIGHT - wall_thickness],
+                [wall_thickness, wall_thickness],
+                [WIDTH - wall_thickness, wall_thickness],
+            ],
+            c.transform,
+            g,
+        );
+    }
+}
+fn draw_indicator<G: piston_window::Graphics>(
+    inflow_vector: &Line,
+    insert_state: &InsertState,
+    holes: &Vec<BlackHole>,
+    g_direction: &GlobalGravity,
+    container_state: &ContainerState,
+    wall_thickness: &f64,
+    bg_colour: [f32; 4],
+    d_state: &DrawState,
+    c: &Context,
+    g: &mut G,
+) {
+    let [x1, y1] = inflow_vector.start;
+    let [x2, y2] = inflow_vector.end;
+    if insert_state == &InsertState::Particle || insert_state == &InsertState::Emitter {
+        let segs = march_line(
+            inflow_vector.start,
+            inflow_vector.as_arr(),
+            500,
+            holes,
+            g_direction,
+            container_state,
+            wall_thickness,
+        );
+        for line_seg in segs {
+            let [seg_x1, seg_y1] = line_seg.start;
+            let [seg_x2, seg_y2] = line_seg.end;
+            piston_window::line(
+                [0.0, 0.0, 0.0, 0.5],
+                2.0,
+                [seg_x1, seg_y1, seg_x2, seg_y2],
+                c.transform,
+                g,
+            );
+        }
+        let inflow_indicator = piston_window::Line::new([0.7, 0.1, 0.0, 1.0], 2.0);
+        inflow_indicator.draw_arrow([x1, y1, x2, y2], 5.0, d_state, c.transform, g);
+        piston_window::ellipse(
+            [0.7, 0.1, 0.0, 1.0],
+            [x1 - 5.0, y1 - 5.0, 10.0, 10.0],
+            c.transform,
+            g,
+        );
+    } else if insert_state == &InsertState::Blackhole {
+        let rad = inflow_vector.abs();
+        piston_window::ellipse(
+            [0.0, 0.0, 0.0, 0.4],
+            [x1 - rad, y1 - rad, rad * 2.0, rad * 2.0],
+            c.transform,
+            g,
+        );
+        let inner_rad = f64::abs(rad - 2.0);
+        piston_window::ellipse(
+            bg_colour,
+            [
+                x1 - inner_rad,
+                y1 - inner_rad,
+                inner_rad * 2.0,
+                inner_rad * 2.0,
+            ],
+            c.transform,
+            g,
+        );
+    }
+}
 
-fn show_gravity_mode(g_direction: &GlobalGravity) -> ([[f64; 2]; 4]) {
+fn draw_black_holes<G: piston_window::Graphics>(
+    holes: &mut Vec<BlackHole>,
+    c: &Context,
+    g: &mut G,
+) {
+    for black_hole in holes {
+        let [bx, by] = black_hole.location;
+        let br = black_hole.radius;
+        piston_window::ellipse(
+            black_hole.colour,
+            [bx - br, by - br, br * 2.0, br * 2.0],
+            c.transform,
+            g,
+        );
+    }
+}
+
+fn draw_gravity_mode(g_direction: &GlobalGravity) -> ([[f64; 2]; 4]) {
     let x_len: f64 = 50.0;
     let y_len: f64 = 50.0;
     let x: f64 = 50.0;
@@ -317,7 +468,27 @@ fn show_gravity_mode(g_direction: &GlobalGravity) -> ([[f64; 2]; 4]) {
     }
     points
 }
-
+fn update_particles(
+    circles: &mut VecDeque<Circle>,
+    holes: &Vec<BlackHole>,
+    g_direction: &GlobalGravity,
+    container_state: &ContainerState,
+    wall_thickness: &f64,
+    dt: f64,
+) {
+    for circ in circles {
+        circ.acceleration = [0.0, 0.0];
+        for bh in holes {
+            apply_gravity(bh, circ);
+        }
+        let [mut gx, mut gy] = GRAVITY;
+        let [pax, pay] = circ.acceleration;
+        gy = gy * (g_direction.num() as f64);
+        gx = gx * (g_direction.num() as f64);
+        circ.acceleration = [pax + gx, pay + gy];
+        circ.update_position(dt, container_state, wall_thickness)
+    }
+}
 fn apply_gravity(bh: &BlackHole, particle: &mut Circle) {
     let [px, py] = particle.position;
     let [pax, pay] = particle.acceleration;
@@ -364,12 +535,13 @@ fn main() {
     };
     let bg_colour = [0.91, 0.9, 0.8, 1.0];
     let mut screen: piston_window::PistonWindow =
-        piston_window::WindowSettings::new("Joeys good game", [WIDTH, HEIGHT])
+        piston_window::WindowSettings::new("physbox-rs", [WIDTH, HEIGHT])
             .exit_on_esc(true)
             .build()
             .unwrap();
     let mut events = screen.events;
     let mut circles: VecDeque<Circle> = VecDeque::new();
+    let mut particles: VecDeque<Circle> = VecDeque::new();
     let mut spawners: Vec<Inflow> = Vec::new();
     let mut holes: Vec<BlackHole> = Vec::new();
     let mut then = SystemTime::now();
@@ -378,122 +550,31 @@ fn main() {
         if e.render_args().is_some() {
             let circs = &circles;
             screen.draw_2d(&e, |c, g, _| {
-                if container_state == ContainerState::Open {
-                    piston_window::clear(bg_colour, g);
-                } else {
-                    piston_window::clear(wall_colour, g);
-                    piston_window::polygon(
-                        bg_colour,
-                        &[
-                            [WIDTH - wall_thickness, HEIGHT - wall_thickness],
-                            [wall_thickness, HEIGHT - wall_thickness],
-                            [wall_thickness, wall_thickness],
-                            [WIDTH - wall_thickness, wall_thickness],
-                        ],
-                        c.transform,
-                        g,
-                    );
-                }
+                draw_background(
+                    &container_state,
+                    bg_colour,
+                    wall_colour,
+                    wall_thickness,
+                    c,
+                    g,
+                );
                 if lmb == ButtonState::Pressed {
-                    let [x1, y1] = inflow_vector.start;
-                    let [x2, y2] = inflow_vector.end;
-                    if insert_state == InsertState::Particle || insert_state == InsertState::Emitter
-                    {
-                        let segs = march_line(
-                            inflow_vector.start,
-                            inflow_vector.as_arr(),
-                            500,
-                            &holes,
-                            &g_direction,
-                            &container_state,
-                            &wall_thickness,
-                        );
-                        for line_seg in segs {
-                            let [seg_x1, seg_y1] = line_seg.start;
-                            let [seg_x2, seg_y2] = line_seg.end;
-                            piston_window::line(
-                                [0.0, 0.0, 0.0, 0.5],
-                                2.0,
-                                [seg_x1, seg_y1, seg_x2, seg_y2],
-                                c.transform,
-                                g,
-                            );
-                        }
-                        let inflow_indicator = piston_window::Line::new([0.7, 0.1, 0.0, 1.0], 2.0);
-                        inflow_indicator.draw_arrow(
-                            [x1, y1, x2, y2],
-                            5.0,
-                            &d_state,
-                            c.transform,
-                            g,
-                        );
-                        piston_window::ellipse(
-                            [0.7, 0.1, 0.0, 1.0],
-                            [x1 - 5.0, y1 - 5.0, 10.0, 10.0],
-                            c.transform,
-                            g,
-                        );
-                    } else if insert_state == InsertState::Blackhole {
-                        let rad = inflow_vector.abs();
-                        piston_window::ellipse(
-                            [0.0, 0.0, 0.0, 0.4],
-                            [x1 - rad, y1 - rad, rad * 2.0, rad * 2.0],
-                            c.transform,
-                            g,
-                        );
-                        let inner_rad = f64::abs(rad - 2.0);
-                        piston_window::ellipse(
-                            bg_colour,
-                            [
-                                x1 - inner_rad,
-                                y1 - inner_rad,
-                                inner_rad * 2.0,
-                                inner_rad * 2.0,
-                            ],
-                            c.transform,
-                            g,
-                        );
-                    }
-                }
-                for black_hole in &mut holes {
-                    let [bx, by] = black_hole.location;
-                    let br = black_hole.radius;
-                    piston_window::ellipse(
-                        black_hole.colour,
-                        [bx - br, by - br, br * 2.0, br * 2.0],
-                        c.transform,
+                    draw_indicator(
+                        &inflow_vector,
+                        &insert_state,
+                        &holes,
+                        &g_direction,
+                        &container_state,
+                        &wall_thickness,
+                        bg_colour,
+                        &d_state,
+                        &c,
                         g,
                     );
                 }
-                for circ in circs {
-                    let [x, y] = circ.position;
-                    if container_state == ContainerState::Closed
-                        || (x > -circ.radius)
-                            && (x < WIDTH + circ.radius)
-                            && (y > -circ.radius)
-                            && (y < HEIGHT + circ.radius)
-                    {
-                        let [c_r, c_g, c_b, _] = circ.colour;
-                        let ellipse = piston_window::Ellipse::new([
-                            c_r,
-                            c_g,
-                            c_b,
-                            1.0 - (circ.age / circ.lifetime) as f32,
-                        ])
-                        .resolution(7);
-                        ellipse.draw(
-                            [
-                                x - circ.radius,
-                                y - circ.radius,
-                                circ.radius * 2.0,
-                                circ.radius * 2.0,
-                            ],
-                            &d_state,
-                            c.transform,
-                            g,
-                        );
-                    }
-                }
+                draw_black_holes(&mut holes, &c, g);
+                draw_particles(circs, &d_state, c, g, &container_state);
+                draw_particles(&particles, &d_state, c, g, &container_state);
                 for inflow in &mut spawners {
                     let [ix, iy] = inflow.position;
                     piston_window::polygon(
@@ -508,7 +589,7 @@ fn main() {
                         g,
                     );
                 }
-                let g_points = show_gravity_mode(&g_direction);
+                let g_points = draw_gravity_mode(&g_direction);
                 let g_colour = {
                     if g_direction.num() == 0 {
                         [1.0, 0.0, 0.0, 0.7]
@@ -532,31 +613,32 @@ fn main() {
             }
         }
         if let Some(u) = e.update_args() {
-            circles.retain(|circ| circ.age < circ.lifetime);
-            for circ in &mut circles {
-                circ.acceleration = [0.0, 0.0];
-                for bh in &holes {
-                    apply_gravity(bh, circ);
-                }
-                let [mut gx, mut gy] = GRAVITY;
-                let [pax, pay] = circ.acceleration;
-                gy = gy * (g_direction.num() as f64);
-                gx = gx * (g_direction.num() as f64);
-                circ.acceleration = [pax + gx, pay + gy];
-                circ.update_position(u.dt, &container_state, &wall_thickness)
-            }
             mouse.prev_location = mouse.location;
             for spawner in &mut spawners {
                 spawner.spawn(&mut circles, u.dt);
             }
-            /*
             loop {
                 match circles.front() {
-                    Some(last) if last.age > PARTICLE_LIFETIME => circles.pop_front(),
+                    Some(last) if last.age > last.lifetime => circles.pop_front(),
                     _ => break,
                 };
             }
-            */
+            update_particles(
+                &mut circles,
+                &holes,
+                &g_direction,
+                &container_state,
+                &wall_thickness,
+                u.dt,
+            );
+            update_particles(
+                &mut particles,
+                &holes,
+                &g_direction,
+                &container_state,
+                &wall_thickness,
+                u.dt,
+            );
         }
         if let Some(m) = e.mouse_cursor_args() {
             let cursor = &mut mouse;
@@ -635,7 +717,7 @@ fn main() {
                             ));
                         }
                         InsertState::Particle => {
-                            circles.push_back(Circle::new(
+                            particles.push_back(Circle::new(
                                 inflow_vector.start,
                                 inflow_vector.as_arr(),
                                 [0.0, 0.0],

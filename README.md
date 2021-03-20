@@ -4,6 +4,8 @@ A physics sandbox written in Rust.
 
 A toy project created while learning the language, graphics drawn using the `piston_window` crate.
 
+**piston_window requires Rust 1.47.0** To reset to a previous Rust version use `rustup default 1.47.0`
+
 ![Orbits](https://github.com/For-The-Wolf/physbox-rs/blob/master/images/orbits.png)
 
 **Figure 1**: Particle emitters and a particle orbiting a blackhole.

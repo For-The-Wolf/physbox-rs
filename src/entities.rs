@@ -1,7 +1,7 @@
-use std::collections::VecDeque;
-use rand::random;
-use std::f64::consts::PI;
 use super::consts;
+use rand::random;
+use std::collections::VecDeque;
+use std::f64::consts::PI;
 
 pub struct Line {
     pub start: [f64; 2],
@@ -45,8 +45,8 @@ pub struct Inflow {
 }
 #[derive(PartialEq)]
 pub enum ContainerState {
-   Open,
-   Closed,
+    Open,
+    Closed,
 }
 impl BlackHole {
     pub fn new(location: [f64; 2], mass: f64, radius: f64) -> BlackHole {
@@ -161,7 +161,12 @@ impl Circle {
         )
     }
 
-    pub fn update_position(&mut self, dt: f64, container_state: &ContainerState, wall_thickness: &f64) {
+    pub fn update_position(
+        &mut self,
+        dt: f64,
+        container_state: &ContainerState,
+        wall_thickness: &f64,
+    ) {
         //let coeff_rest: f64 = 0.2 + random::<f64>() * 0.5;
         let coeff_rest: f64 = self.coeff_rest;
         self.age += dt;

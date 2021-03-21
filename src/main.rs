@@ -15,7 +15,6 @@ enum InsertState {
     Static,
 }
 
-
 #[derive(PartialEq)]
 enum ButtonState {
     Pressed,
@@ -28,7 +27,6 @@ enum GlobalGravity {
     Down,
     NoGravity,
 }
-
 
 struct Mouse {
     location: [f64; 2],
@@ -51,7 +49,6 @@ impl GlobalGravity {
         }
     }
 }
-
 
 fn march_line(
     init_pos: [f64; 2],
@@ -141,7 +138,10 @@ fn draw_background<G: piston_window::Graphics>(
         piston_window::polygon(
             bg_colour,
             &[
-                [consts::WIDTH - wall_thickness, consts::HEIGHT - wall_thickness],
+                [
+                    consts::WIDTH - wall_thickness,
+                    consts::HEIGHT - wall_thickness,
+                ],
                 [wall_thickness, consts::HEIGHT - wall_thickness],
                 [wall_thickness, wall_thickness],
                 [consts::WIDTH - wall_thickness, wall_thickness],

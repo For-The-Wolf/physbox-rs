@@ -85,7 +85,11 @@ fn march_line(
     }
     line_segments
 }
-fn _show_insert_mode(_insert_mode: InsertState) {}
+
+fn _show_insert_mode(_insert_mode: InsertState) {
+    todo!();
+}
+
 fn draw_particles<G: piston_window::Graphics>(
     circs: &VecDeque<entities::Circle>,
     d_state: &DrawState,
@@ -123,6 +127,7 @@ fn draw_particles<G: piston_window::Graphics>(
         }
     }
 }
+
 fn draw_background<G: piston_window::Graphics>(
     container_state: &entities::ContainerState,
     bg_colour: [f32; 4],
@@ -151,6 +156,7 @@ fn draw_background<G: piston_window::Graphics>(
         );
     }
 }
+
 fn draw_indicator<G: piston_window::Graphics>(
     inflow_vector: &entities::Line,
     insert_state: &InsertState,
@@ -268,6 +274,7 @@ fn draw_gravity_mode(g_direction: &GlobalGravity) -> ([[f64; 2]; 4]) {
     }
     points
 }
+
 fn update_particles(
     circles: &mut VecDeque<entities::Circle>,
     holes: &Vec<entities::BlackHole>,
